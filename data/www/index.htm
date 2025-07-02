@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayab WebApp</title>
+    <link rel="stylesheet" href="style.css">
+    <script defer src="utils.js"></script>
+    <script defer src="upload.js"></script>
+    <script defer src="websocket_api.js"></script>
+    <script defer src="slip.js"></script>
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="ayab_logo.png" alt="Ayab logo">
+            <h1>Ayab</h1>
+        </div>
+        <nav class="menu-bar">
+            <div class="menu-content"></div>    
+            <ul>
+                <li><a href="#" data-content="home">Home</a></li>
+                <li><a href="#" data-content="wifi">WiFi</a></li>
+                <li><a href="#" data-content="tools">Tools</a></li>
+                <li><a href="#" data-content="help">Help</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-panel">
+        <section class="main-content">
+        </section>
+        <aside class="sidebar-content">
+        </aside>
+    </main>
+
+    <section class="log-panel">
+        <div class="log-header">
+            <h3>Console</h3>
+            <button id="clearConsoleButton">Clear Console</button>
+        </div>       
+        <div id="log" class="log-output"></div>
+    </section>
+</body>
+</html>

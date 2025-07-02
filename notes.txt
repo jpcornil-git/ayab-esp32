@@ -1,0 +1,31 @@
+ToDo:
+- Mutex between RA4M1 flash update from ws or post request 
+
+Restore factory firmware
+See https://support.arduino.cc/hc/en-us/articles/16379769332892-Restore-the-USB-connectivity-firmware-on-UNO-R4-WiFi-with-espflash
+
+- Short download and gnd pin with a jumper
+- Download on of:
+https://github.com/arduino/uno-r4-wifi-usb-bridge/releases/latest/download/unor4wifi-update-windows.zip
+https://github.com/arduino/uno-r4-wifi-usb-bridge/releases/latest/download/unor4wifi-update-macos.zip
+https://github.com/arduino/uno-r4-wifi-usb-bridge/releases/latest/download/unor4wifi-update-linux.zip
+- Connect UnoR4 USB
+- Run the command:
+   - Windows: bin\espflash write-bin -b 115200 0x0 (Get-Item .\firmware\UNOR4-WIFI-S3-*.bin).FullName
+   - macOS/Linux: ./bin/espflash write-bin -b 115200 0x0 firmware/UNOR4-WIFI-S3-*.bin
+- Disconnect UnoR4 USB
+- Remove jumper
+
+WebSerial
+  - flasher:  https://espressif.github.io/esptool-js/
+  - terminal: https://terminal.vavrin.eu/
+
+Websocket from python
+from websockets.sync.client import connect
+import json
+ws=connect("ws://192.168.1.22/ws")
+# Flash default RA4M1 firmware
+ws.send(json.dumps({'id':224}))
+
+esptool.py write_flash 0x0 build/ayab-esp32_flash.bin
+idf.py monitor

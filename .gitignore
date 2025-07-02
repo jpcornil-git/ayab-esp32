@@ -1,0 +1,15 @@
+build/
+managed_components/
+sdkconfig
+sdkconfig.old
+
+# vscode
+.devcontainer/
+.vscode/
+
+# esp-idf built binaries
+build/
+sdkconfig
+
+# idf-component-manager output
+dependencies.lock

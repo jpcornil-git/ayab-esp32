@@ -1,0 +1,20 @@
+menu "Ayab WebApp Configuration"
+
+    config DEFAULT_WIFI_SSID
+        string "WiFi SSID"
+        default "AP Ayab Wifi"
+        help
+            WiFi SSID (network name) to connect to.
+
+    config DEFAULT_WIFI_PASSWORD
+        string "WiFi Password"
+        default "ayabpass"
+        help
+            WiFi password (WPA or WPA2) of network.
+
+    config DEFAULT_AYAB_HOSTNAME
+        string "Hostname"
+        default "ayab"
+        help
+            Hostname for this device.
+endmenu
