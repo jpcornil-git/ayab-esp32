@@ -45,7 +45,7 @@ UnoR4 (esp32s3) platform to support ayab webapp development
 - Remove jumper and restart (unplug USB)
     - Note: at first boot the RA4M1 flash is updated (~3-4 seconds extra to boot) and device will fall back in AP mode (ãfter ~10s/3 failing attempt to connect to WiFi) 
 - Connect to device's WiFi (SSID="AP Ayab Wifi")
-    - Navigate to http://ayab.local/network.htm or http://192.168.4.1/network.htm to set your WiFi credentials
+    - Navigate to http://ayab.local or http://192.168.4.1 and set your WiFi credentials from the WiFi menu
         - Android phone doesn't support mDNS -> use http://192.168.4.1 instead of ayab.local
     - Restart to connect device to your WiFi network
     - Navigate to ayab.local
