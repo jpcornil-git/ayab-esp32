@@ -4,6 +4,7 @@ set(COMPONENT_SRCS
     srv_mdns.c
     srv_spiffs.c
     srv_websocket.c
+    srv_wifi.c
 )
 
 set(COMPONENT_PUBLIC_INCLUDE_DIRS
@@ -31,5 +32,5 @@ idf_component_register(
     SRCS "${COMPONENT_SRCS}"
     INCLUDE_DIRS "${COMPONENT_PUBLIC_INCLUDE_DIRS}"
     REQUIRES "${COMPONENT_REQUIRES}"
-    PRIV_REQUIRES "${COMPONENT_PRIV_REQUIRES}"
+    PRIV_REQUIRES "${COMPONENT_PRIV_REQUIRES}" main
 )

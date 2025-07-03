@@ -4,7 +4,7 @@
 #include "esp_wifi.h"
 
 #include "app_define.h"
-#include "ifce_wifi.h"
+#include "srv_wifi.h"
 
 
 static const char *TAG = "ifce_wifi";
@@ -17,7 +17,7 @@ static int sta_connect_retries = 0;
 static EventGroupHandle_t *wifi_event_group; 
 
 // Wifi event handler
-static void wifi_event_handler(void *arg, esp_event_base_t event_base,
+static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data) {
     // Wifi events
     if (event_base == WIFI_EVENT) {
@@ -63,13 +63,13 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
     }
 }
 
-void ifce_wifi_start_STA(EventGroupHandle_t *event_group, const char* ssid, const char* password)  {
+void srv_wifi_start_STA(EventGroupHandle_t *event_group, const char* ssid, const char* password)  {
     wifi_event_group = event_group;
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &_wifi_event_handler, NULL));
 
     // Initialize Wi-Fi including netif with default STA config
     wifi_netif_handle = esp_netif_create_default_wifi_sta();
@@ -83,13 +83,13 @@ void ifce_wifi_start_STA(EventGroupHandle_t *event_group, const char* ssid, cons
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
-void ifce_wifi_start_AP(EventGroupHandle_t *event_group) {
+void srv_wifi_start_AP(EventGroupHandle_t *event_group) {
     wifi_event_group = event_group;
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &_wifi_event_handler, NULL));
 
     // Initialize Wi-Fi including netif with default AP config
     wifi_netif_handle = esp_netif_create_default_wifi_ap();
@@ -113,13 +113,13 @@ void ifce_wifi_start_AP(EventGroupHandle_t *event_group) {
     ESP_LOGI(TAG, "softAP on IP: %s", ip_addr);
 }
 
-void ifce_wifi_stop(void) {
+void srv_wifi_stop(void) {
     esp_err_t err = esp_wifi_stop();
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "esp_wifi_stop failed");
         return;
     }
-    ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &_wifi_event_handler));
     esp_wifi_deinit();
     esp_netif_destroy(wifi_netif_handle);
 }

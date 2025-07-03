@@ -1,6 +1,5 @@
 set(COMPONENT_SRCS
     main.c
-    ifce_wifi.c
 )
 
 set(COMPONENT_INCLUDE_DIRS

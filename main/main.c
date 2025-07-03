@@ -10,15 +10,15 @@
 
 #include "app_define.h"
 #include "app_config.h"
-#include "ifce_wifi.h"
 #include "ra4m1_ctrl.h"
 #include "ra4m1_uart.h"
 #include "ra4m1_samba.h"
 #include "ra4m1_flash.h"
 #include "srv_spiffs.h"
 #include "srv_http.h"
-#include "srv_websocket.h"
 #include "srv_mdns.h"
+#include "srv_websocket.h"
+#include "srv_wifi.h"
 
 static const char *TAG = "main";
 
@@ -120,7 +120,7 @@ void app_main() {
     app_setup();
 
     // Start WiFi STA mode as default (fallback to AP mode after 3 failures)
-    ifce_wifi_start_STA(&app_event_group,
+    srv_wifi_start_STA(&app_event_group,
         app_config_get(NVS_WIFI_SSID),
         app_config_get(NVS_WIFI_PASSWORD)
     );
@@ -143,8 +143,8 @@ void app_main() {
             ESP_LOGI(TAG, "Unable to connect as STA, switching to softAP mode");
             srv_http_stop();
             srv_mdns_stop();
-            ifce_wifi_stop();
-            ifce_wifi_start_AP(&app_event_group);    
+            srv_wifi_stop();
+            srv_wifi_start_AP(&app_event_group);    
         } 
         
         // Websocket - Serial communication bridge
