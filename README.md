@@ -14,16 +14,31 @@ UnoR4 (esp32s3) platform to support ayab webapp development
 
 ## How to build
 - Clone this repository
-- Install vscode & tools: https://docs.espressif.com/projects/vscode-esp-idf-extension/en/latest/prerequisites.html
-- Install esp-idf vscode extension: https://docs.espressif.com/projects/vscode-esp-idf-extension/en/latest/installation.html
-- Import this project within vscode and build project
+- Command line:
+    - Setup IDF environment
+        ``` bash
+        > source <idf path >/esp-idf/export.sh
+        ```
+    - Build project
+        ``` bash
+        > idf.py build
+        ```
+- VS Code:
+    - Install vscode & tools: https://docs.espressif.com/projects/vscode-esp-idf-extension/en/latest/prerequisites.html
+    - Install esp-idf vscode extension: https://docs.espressif.com/projects/vscode-esp-idf-extension/en/latest/installation.html
+    - Import this project within vscode
+    - **Important**: Set target to `esp32s3` (extension doesn't take CONFIG_IDF_TARGET from sdkconfig.defaults into account to setup target)
+    - Build project
 
 ## Flash Update
 ### Install ayab-esp32
 - Find *download* and *gnd* pin  on the 6-pin header next to the USB-C connector and short them with a jumper
 - Connect UnoR4 USB (or reboot ESP32 to take above into account)
 - Run one the following method to write the flash image produced above:
-    - command line : ```esptool.py write_flash 0x0 build/ayab-esp32_flash.bin```
+    - command line :
+        ``` bash
+        > esptool.py write_flash 0x0 build/ayab-esp32_flash.bin
+        ```
     - web application: https://espressif.github.io/esptool-js/ (flash from 0x0 and use 460800 for the baud rate)
     - Wait until the flash update is completely finished !
 - Disconnect UnoR4 USB
