@@ -29,9 +29,9 @@ static EventGroupHandle_t app_event_group;
 static QueueHandle_t app_queue_uart_tx;
 
 // Global variables for configuration parameters
-static char wifiSSID[APP_CONFIG_VALUE_SIZE];
-static char wifiPassword[APP_CONFIG_VALUE_SIZE];
-static char hostName[APP_CONFIG_VALUE_SIZE];
+static char wifiSSID[APP_CONFIG_VALUE_SIZE] = {0};
+static char wifiPassword[APP_CONFIG_VALUE_SIZE] = {0};
+static char hostName[APP_CONFIG_VALUE_SIZE] = {0};
 
 app_config_t  defaultConfig[] = {
     {.key = NVS_WIFI_SSID    , .value = wifiSSID    , .size = APP_CONFIG_VALUE_SIZE, .default_value = CONFIG_DEFAULT_WIFI_SSID},
@@ -47,7 +47,7 @@ static mdns_txt_item_t serviceTxtData[] = {
 };
 
 // Called from a different task context -> use a queue to forward data to ra4m1 uart
-BaseType_t ws_rx_bin_callback(uint8_t *payload, size_t len) {
+BaseType_t ws_rx_bin_callback(const uint8_t *payload, size_t len) {
     BaseType_t rv= pdFALSE;
     uart_msg_t msg;
 
@@ -56,7 +56,12 @@ BaseType_t ws_rx_bin_callback(uint8_t *payload, size_t len) {
     if(msg.payload != NULL) {
         memcpy(msg.payload, payload, len);
         rv = xQueueSendToBack(app_queue_uart_tx, &msg, 0);
-        xEventGroupSetBits(app_event_group, RA4M1_UART_TX);
+        if (rv != pdTRUE) {
+            free(msg.payload); // Failed to send message, free payload
+            ESP_LOGE(TAG, "Failed to send message to UART queue");
+        } else {
+            xEventGroupSetBits(app_event_group, RA4M1_UART_TX);
+        }
     }
     return rv;
 }
@@ -64,7 +69,7 @@ BaseType_t ws_rx_bin_callback(uint8_t *payload, size_t len) {
 void app_setup() {
     // Setup RA4M1 Interfaces
     ra4m1_ctrl_init(RA4M1_PIN_RESET, RA4M1_PIN_BOOT);
-    ra4m1_uart_init(RA4M1_UART, RA4M1_UART_BAUDRATE, RA4M1_UART_TX_PIN, RA4M1_UART_RX_PIN, &app_event_group, RA4M1_UART_RX);
+    ra4m1_uart_init(RA4M1_UART, RA4M1_UART_BAUDRATE, RA4M1_UART_TX_PIN, RA4M1_UART_RX_PIN, app_event_group, RA4M1_UART_RX);
     ra4m1_samba_init(RA4M1_UART, RA4M1_SAMBA_BAUDRATE);
 
     // Initialize NVS
@@ -120,7 +125,7 @@ void app_main() {
     app_setup();
 
     // Start WiFi STA mode as default (fallback to AP mode after 3 failures)
-    srv_wifi_start_STA(&app_event_group,
+    srv_wifi_start_STA(app_event_group,
         app_config_get(NVS_WIFI_SSID),
         app_config_get(NVS_WIFI_PASSWORD)
     );
@@ -144,7 +149,7 @@ void app_main() {
             srv_http_stop();
             srv_mdns_stop();
             srv_wifi_stop();
-            srv_wifi_start_AP(&app_event_group);    
+            srv_wifi_start_AP(app_event_group);    
         } 
         
         // Websocket - Serial communication bridge

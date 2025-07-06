@@ -21,7 +21,7 @@ uart_config_t _uart_config = {
 
 static int _ra4m1_uart_num;
 static QueueHandle_t _ra4m1_uart_event_queue;
-static EventGroupHandle_t *_app_event_group; 
+static EventGroupHandle_t _app_event_group; 
 static EventBits_t _ra4m1_uart_event_rx;
 
 static const char *TAG = "ra4m1_uart";
@@ -36,7 +36,7 @@ static void _uart_event_task(void *pvParameters) {
             case UART_DATA:
                 // Ignore Rx data while programming
                 if (ra4m1_ctrl_is_programming() == false) {
-                    xEventGroupSetBits(*_app_event_group, _ra4m1_uart_event_rx);
+                    xEventGroupSetBits(_app_event_group, _ra4m1_uart_event_rx);
                 }
                 break;
             //Event of UART buffer overflow
@@ -60,7 +60,7 @@ static void _uart_event_task(void *pvParameters) {
     }
 }
 
-void ra4m1_uart_init(int uart_num, int baud_rate, int tx_pin, int rx_pin, EventGroupHandle_t *event_group, EventBits_t event_rx) {
+void ra4m1_uart_init(int uart_num, int baud_rate, int tx_pin, int rx_pin, EventGroupHandle_t event_group, EventBits_t event_rx) {
     _ra4m1_uart_num = uart_num;
     _uart_config.baud_rate = baud_rate;
     _app_event_group = event_group;

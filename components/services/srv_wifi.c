@@ -14,7 +14,7 @@ static esp_netif_t *wifi_netif_handle = NULL;
 #define MAX_STA_CONNECT_RETRIES 3
 static int sta_connect_retries = 0;
 
-static EventGroupHandle_t *wifi_event_group; 
+static EventGroupHandle_t wifi_event_group; 
 
 // Wifi event handler
 static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
@@ -28,7 +28,7 @@ static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
             ESP_LOGI(TAG, "Starting STA mode.");
         } else if (event_id == WIFI_EVENT_STA_CONNECTED) {       
             wifi_event_sta_connected_t *event = (wifi_event_sta_connected_t *)event_data;
-            xEventGroupSetBits(*wifi_event_group, WIFI_STA_CONNECTED_EVENT); 
+            xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECTED_EVENT); 
             ESP_LOGI(TAG, "Connected to AP (ssid=%s, channel=%d)", event->ssid, event->channel);           
         } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {       
             if (sta_connect_retries < MAX_STA_CONNECT_RETRIES) {
@@ -36,12 +36,12 @@ static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
                 esp_wifi_connect();
                 ESP_LOGI(TAG, "Disconnected from AP, trying to reconnect ... (attempt %d/%d).", sta_connect_retries, MAX_STA_CONNECT_RETRIES);
             } else {
-                xEventGroupSetBits(*wifi_event_group, WIFI_STA_CANT_CONNECT_EVENT);
+                xEventGroupSetBits(wifi_event_group, WIFI_STA_CANT_CONNECT_EVENT);
                 ESP_LOGI(TAG, "Failed to reconnect to AP after %d attempts.", MAX_STA_CONNECT_RETRIES);
             }
         // AP Mode events
         } else if (event_id == WIFI_EVENT_AP_START) {
-            xEventGroupSetBits(*wifi_event_group, WIFI_AP_CONNECTED_EVENT);
+            xEventGroupSetBits(wifi_event_group, WIFI_AP_CONNECTED_EVENT);
             ESP_LOGI(TAG, "Starting AP mode.");
         } else if (event_id == WIFI_EVENT_AP_STACONNECTED) {
             wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *)event_data;
@@ -56,14 +56,14 @@ static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
     } else if (event_base == IP_EVENT) {
         if (event_id == IP_EVENT_STA_GOT_IP) {
             sta_connect_retries = 0;
-            xEventGroupSetBits(*wifi_event_group, WIFI_STA_CONNECTED_EVENT);
+            xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECTED_EVENT);
             ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
             ESP_LOGI(TAG, "Connected to AP with IP = " IPSTR, IP2STR(&event->ip_info.ip));
         }
     }
 }
 
-void srv_wifi_start_STA(EventGroupHandle_t *event_group, const char* ssid, const char* password)  {
+void srv_wifi_start_STA(EventGroupHandle_t event_group, const char* ssid, const char* password)  {
     wifi_event_group = event_group;
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -83,7 +83,7 @@ void srv_wifi_start_STA(EventGroupHandle_t *event_group, const char* ssid, const
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
-void srv_wifi_start_AP(EventGroupHandle_t *event_group) {
+void srv_wifi_start_AP(EventGroupHandle_t event_group) {
     wifi_event_group = event_group;
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
