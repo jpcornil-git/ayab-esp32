@@ -62,6 +62,8 @@ BaseType_t ws_rx_bin_callback(const uint8_t *payload, size_t len) {
         } else {
             xEventGroupSetBits(app_event_group, RA4M1_UART_TX);
         }
+    } else {
+        ESP_LOGE(TAG, "Failed to allocate memory for UART message payload");
     }
     return rv;
 }
@@ -95,6 +97,7 @@ void app_setup() {
 
     // Create an event group to collect events from various tasks
     app_event_group = xEventGroupCreate();
+    ESP_ERROR_CHECK(app_event_group != NULL ? ESP_OK : ESP_FAIL);
 
     // Create a queue to handle messages from httpd/ws task to uart
     app_queue_uart_tx = xQueueCreate(APP_QUEUE_UART_TX_SIZE, sizeof(uart_msg_t) );
