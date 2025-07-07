@@ -65,7 +65,7 @@ static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
     }
 }
 
-void srv_wifi_start_STA(EventGroupHandle_t event_group, const char* ssid, const char* password)  {
+void _wifi_start_common(EventGroupHandle_t event_group)  {
     wifi_event_group = event_group;
 
     if (!wifi_initialized) {
@@ -76,8 +76,11 @@ void srv_wifi_start_STA(EventGroupHandle_t event_group, const char* ssid, const 
 
     // Unregister the event handler first to avoid duplicate handlers if switching modes
     esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &_wifi_event_handler);
-
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &_wifi_event_handler, NULL));
+}
+
+void srv_wifi_start_STA(EventGroupHandle_t event_group, const char* ssid, const char* password)  {
+    _wifi_start_common(event_group);
 
     // Initialize Wi-Fi including netif with default STA config
     wifi_netif_handle = esp_netif_create_default_wifi_sta();
@@ -94,18 +97,7 @@ void srv_wifi_start_STA(EventGroupHandle_t event_group, const char* ssid, const 
 }
 
 void srv_wifi_start_AP(EventGroupHandle_t event_group) {
-    wifi_event_group = event_group;
-
-    if (!wifi_initialized) {
-        wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-        ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-        wifi_initialized = true;
-    }
-
-    // Unregister the event handler first to avoid duplicate handlers if switching modes
-    esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &_wifi_event_handler);
-
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &_wifi_event_handler, NULL));
+    _wifi_start_common(event_group);
 
     // Initialize Wi-Fi including netif with default AP config
     wifi_netif_handle = esp_netif_create_default_wifi_ap();
