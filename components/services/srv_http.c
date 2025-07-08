@@ -12,7 +12,7 @@
 
 static const char *TAG = "srv_http";
 
-static httpd_handle_t server = NULL;
+static httpd_handle_t _server = NULL;
 
 void srv_http_start(const char *base_path, ws_callback_t ws_rx_bin_callback) {
 
@@ -23,10 +23,10 @@ void srv_http_start(const char *base_path, ws_callback_t ws_rx_bin_callback) {
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
 
-    esp_err_t err = httpd_start(&server, &config);
+    esp_err_t err = httpd_start(&_server, &config);
     if (err == ESP_OK) {
         // Initialize websocket service
-        srv_websocket_init(server, ws_rx_bin_callback);
+        srv_websocket_init(_server, ws_rx_bin_callback);
 
         // Set URI handlers
         ESP_LOGI(TAG, "Registering URI handlers");
@@ -38,7 +38,7 @@ void srv_http_start(const char *base_path, ws_callback_t ws_rx_bin_callback) {
             .user_ctx  = NULL,
             .is_websocket = true
         };
-        httpd_register_uri_handler(server, &ws_uri);
+        httpd_register_uri_handler(_server, &ws_uri);
 
         /* URI handler for uploading app image to flash */
         httpd_uri_t ota_upload = {
@@ -47,21 +47,21 @@ void srv_http_start(const char *base_path, ws_callback_t ws_rx_bin_callback) {
             .handler   = ota_post_handler,
             .user_ctx  = NULL
         };
-        httpd_register_uri_handler(server, &ota_upload);
+        httpd_register_uri_handler(_server, &ota_upload);
         
         // Start file service (should be called after above code as it registers uri as well)
-        srv_file_start(server, base_path, SRV_HTTP_PATH_WWW);
+        srv_file_start(_server, base_path, SRV_HTTP_PATH_WWW);
     }
     // Rollback in case of error after a fisrt App execution
     ota_app_validate(err);
 }
 
 void srv_http_stop() {
-    if (server != NULL) {
+    if (_server != NULL) {
         // Stop the httpd server
         ESP_LOGI(TAG, "Stopping server");
-        httpd_stop(server);
-        server = NULL;
+        httpd_stop(_server);
+        _server = NULL;
         srv_file_stop();
     } else {
         ESP_LOGW(TAG, "Server stopped already !");
