@@ -157,6 +157,10 @@ static esp_err_t _srv_websocket_send(
 // Allocator for JSON payload (text)
 static esp_err_t _ws_payload_alloc_json(struct async_resp_arg *rep_arg, void *data, uint32_t data_len) {
     cJSON *msg = (cJSON *)data;
+    if (msg == NULL) {
+        ESP_LOGE(TAG, "JSON message is NULL");
+        return ESP_ERR_INVALID_ARG;
+    }
     char *json_str = cJSON_Print(msg);
     if (!json_str) return ESP_ERR_NO_MEM;
     rep_arg->ws_pkt->payload = (uint8_t *)json_str;
@@ -166,7 +170,7 @@ static esp_err_t _ws_payload_alloc_json(struct async_resp_arg *rep_arg, void *da
 
 // Allocator for binary payload
 static esp_err_t _ws_payload_alloc_bin(struct async_resp_arg *rep_arg, void *data, uint32_t data_len) {
-    if (data_len == 0) return ESP_ERR_INVALID_ARG;
+    if (data_len == 0 || data == NULL) return ESP_ERR_INVALID_ARG;
     rep_arg->ws_pkt->payload = malloc(data_len);
     if (!rep_arg->ws_pkt->payload) return ESP_ERR_NO_MEM;
     memcpy(rep_arg->ws_pkt->payload, data, data_len);
@@ -207,6 +211,10 @@ static esp_err_t _srv_websocket_send_json(httpd_req_t *req, int msgId, void (*js
 /* Send binary message using websocket.
     Function can be called from a different thread) */
 esp_err_t srv_websocket_send_bin(uint8_t *buffer, uint32_t buffer_length) {
+    if (buffer == NULL || buffer_length == 0) {
+        ESP_LOGE(TAG, "Buffer is NULL or length is zero");
+        return ESP_ERR_INVALID_ARG;
+    }
     return _srv_websocket_send(
         _server, -1, HTTPD_WS_TYPE_BINARY, _ws_payload_alloc_bin, buffer, buffer_length);
 }
