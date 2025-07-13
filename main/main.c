@@ -69,6 +69,17 @@ BaseType_t ws_rx_bin_callback(const uint8_t *payload, size_t len) {
 }
 
 void app_setup() {
+    // Create the default event loop
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    // Create an event group to collect events from various tasks
+    app_event_group = xEventGroupCreate();
+    ESP_ERROR_CHECK(app_event_group != NULL ? ESP_OK : ESP_FAIL);
+
+    // Create a queue to handle messages from httpd/ws task to uart
+    app_queue_uart_tx = xQueueCreate(APP_QUEUE_UART_TX_SIZE, sizeof(uart_msg_t) );
+    ESP_ERROR_CHECK(app_queue_uart_tx != 0 ? ESP_OK : ESP_FAIL);
+
     // Setup RA4M1 Interfaces
     ra4m1_ctrl_init(RA4M1_PIN_RESET, RA4M1_PIN_BOOT);
     ra4m1_uart_init(RA4M1_UART, RA4M1_UART_BAUDRATE, RA4M1_UART_TX_PIN, RA4M1_UART_RX_PIN, app_event_group, RA4M1_UART_RX);
@@ -94,17 +105,6 @@ void app_setup() {
 
     // Initialise SPIFFS file system
     srv_spiffs_start(SPIFFS_BASE_PATH);
-
-    // Create an event group to collect events from various tasks
-    app_event_group = xEventGroupCreate();
-    ESP_ERROR_CHECK(app_event_group != NULL ? ESP_OK : ESP_FAIL);
-
-    // Create a queue to handle messages from httpd/ws task to uart
-    app_queue_uart_tx = xQueueCreate(APP_QUEUE_UART_TX_SIZE, sizeof(uart_msg_t) );
-    ESP_ERROR_CHECK(app_queue_uart_tx != 0 ? ESP_OK : ESP_FAIL);
-
-    // Create the default event loop
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     // Initialize the networking stack
     ESP_ERROR_CHECK(esp_netif_init());
