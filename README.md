@@ -1,6 +1,6 @@
 # ESP32 WebApp platform for Ayab
 
-UnoR4 (esp32s3) platform to support ayab webapp development
+**UnoR4 WiFi** (esp32s3) platform to support ayab webapp development
 
 ## Features
 - WiFi connectivity
@@ -29,6 +29,9 @@ UnoR4 (esp32s3) platform to support ayab webapp development
     - Import this project within vscode
     - **Important**: Set target to `esp32s3` (extension doesn't take CONFIG_IDF_TARGET from sdkconfig.defaults into account to setup target)
     - Build project
+
+## Serial monitor (system logs)
+Connect the UnoR4 USB interface to your computer and start a serial console (minicom, putty, ...) or a webserial application with a baud rate set to 115200 for the corresponding port.
 
 ## Flash Update
 ### Install ayab-esp32
