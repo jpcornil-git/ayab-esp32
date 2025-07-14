@@ -10,11 +10,12 @@ static const char *TAG = "srv_spiffs";
 
 static char _base_path[ESP_VFS_PATH_MAX+1];
 
-void srv_spiffs_start(char* base_path) {
+esp_err_t srv_spiffs_start(char* base_path) {
     ESP_LOGI(TAG, "Initializing SPIFFS");
     ESP_ERROR_CHECK(base_path != NULL ? ESP_OK : ESP_FAIL);
 
     strncpy(_base_path, base_path, ESP_VFS_PATH_MAX);
+    _base_path[ESP_VFS_PATH_MAX] = '\0';
 
     esp_vfs_spiffs_conf_t conf = {
       .base_path = _base_path,
@@ -32,9 +33,10 @@ void srv_spiffs_start(char* base_path) {
         } else {
             ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
         }
-        return;
+        return ret;
     }
-/* Trigger a WDT
+/* Not acceptable for production, WDT timeout has to be reconfigured
+to at least 70s to avoid a TWDT watchdog reset ... 
     ESP_LOGI(TAG, "Performing SPIFFS_check().");
     ret = esp_spiffs_check(conf.partition_label);
     if (ret != ESP_OK) {
@@ -48,15 +50,16 @@ void srv_spiffs_start(char* base_path) {
     ret = esp_spiffs_info(NULL, &total, &used);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
-        return;
+    } else {
+        ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
     }
-    ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
+    return ret;
 }
 
-void srv_spiffs_restart() {
-    srv_spiffs_start(_base_path);
+esp_err_t srv_spiffs_restart() {
+    return srv_spiffs_start(_base_path);
 }
 
-void srv_spiffs_stop(void) {
-    esp_vfs_spiffs_unregister(NULL);
+esp_err_t srv_spiffs_stop(void) {
+    return esp_vfs_spiffs_unregister(NULL);
 }
