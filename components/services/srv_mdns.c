@@ -1,3 +1,4 @@
+#include <string.h>
 #include "esp_log.h"
 
 #include "esp_mac.h"
@@ -24,7 +25,9 @@ void srv_mdns_start(const char *hostname, wifi_interface_t wifi_ifce, const char
     ESP_ERROR_CHECK( mdns_instance_name_set(instance_name) );
     //initialize service
     ESP_ERROR_CHECK( mdns_service_add(instance_name, "_http", "_tcp", 80, NULL, 0) );
-    ESP_ERROR_CHECK( mdns_service_add(instance_name, service_type, "_tcp", 80, serviceTxtData, size) );
+    if(strcmp(service_type, "_http") != 0) {
+        ESP_ERROR_CHECK( mdns_service_add(instance_name, service_type, "_tcp", 80, serviceTxtData, size) );
+    }
 }
 
 void srv_mdns_stop() {
