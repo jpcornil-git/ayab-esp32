@@ -173,7 +173,7 @@ void app_main() {
             // Start the http server    
             esp_err_t err = srv_http_start(SPIFFS_BASE_PATH, ws_rx_bin_callback);
             // Validate or rollback ESP32 firmware after an OTA update
-            ota_app_validate(err);
+            ota_app_validate(err == ESP_OK);
         } else if (event_bits & WIFI_STA_CANT_CONNECT_EVENT) {
             ESP_LOGI(TAG, "Unable to connect as STA, switching to softAP mode");
             srv_http_stop();
