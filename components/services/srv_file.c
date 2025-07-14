@@ -298,7 +298,7 @@ static esp_err_t _upload_post_handler(httpd_req_t *req)
 }
 
 // Populate JSON data with list of all files (name, sie, [url])
-void srv_file_json_list_files(cJSON *data) {
+void srv_file_json_list_files(cJSON *list_files) {
     char entrypath[FILE_PATH_MAX];
     struct dirent *entry;
     struct stat entry_stat;
@@ -313,7 +313,7 @@ void srv_file_json_list_files(cJSON *data) {
 
     // FIXME: Add error handling ...
     cJSON *json_entries = cJSON_CreateArray();
-    cJSON_AddItemToObject(data, "list_files", json_entries);
+    cJSON_AddItemToObject(list_files, "list_files", json_entries);
     /* Iterate over all files / folders and fetch their names and sizes */
     while ((entry = readdir(dir)) != NULL) {
         strlcpy(entrypath + _self.root_path_len + 1, entry->d_name, sizeof(entrypath) - _self.root_path_len -1);
