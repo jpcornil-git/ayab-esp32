@@ -101,7 +101,7 @@ esp_err_t app_config_load() {
 }
 
 esp_err_t app_config_save() {
-    xSemaphoreGive(_self.config_mutex);
+    xSemaphoreTake(_self.config_mutex, portMAX_DELAY);
     nvs_handle_t nvs_ayab;
     esp_err_t err = nvs_open(_self.namespace, NVS_READWRITE, &nvs_ayab);
     if (err == ESP_OK) {
