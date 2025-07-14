@@ -6,16 +6,20 @@
 #include "esp_log.h"
 #include "ra4m1_ctrl.h"
 
+typedef struct {
+    gpio_num_t resetPin;  /*!< GPIO pin for reset */
+    gpio_num_t bootPin;   /*!< GPIO pin for boot mode */
+    bool program_mode; /*!< Flag indicating if the device is in programming mode */
+} ra4m1_ctrl_data_t;
+
 static const char *TAG = "ra4m1_device";
 
-static gpio_num_t _resetPin;
-static gpio_num_t _bootPin;
-static bool _program_mode; // No mutex, MCU reset within the programming window
+static ra4m1_ctrl_data_t _self;
 
 void ra4m1_ctrl_init(gpio_num_t resetPin, gpio_num_t bootPin) {
-    _resetPin = resetPin;
-    _bootPin  = bootPin;
-    _program_mode = false;
+    _self.resetPin = resetPin;
+    _self.bootPin  = bootPin;
+    _self.program_mode = false;
 
     // Define startup levels
     ra4m1_ctrl_bootPin_set(HIGH);
@@ -33,20 +37,19 @@ void ra4m1_ctrl_init(gpio_num_t resetPin, gpio_num_t bootPin) {
 }
 
 void ra4m1_ctrl_bootPin_set(int level) {
-    gpio_set_level(_bootPin, level);
+    gpio_set_level(_self.bootPin, level);
 }
 
 void ra4m1_ctrl_resetPin_set(int level) {
-    gpio_set_level(_resetPin, level);
+    gpio_set_level(_self.resetPin, level);
 }
 
 int ra4m1_ctrl_resetPin_get() {
-    return gpio_get_level(_resetPin);
+    return gpio_get_level(_self.resetPin);
 }
 
-
 void ra4m1_ctrl_reset_toggle() {
-    ra4m1_ctrl_resetPin_set(gpio_get_level(_resetPin) ? 0 : 1);
+    ra4m1_ctrl_resetPin_set(gpio_get_level(_self.resetPin) ? 0 : 1);
 }
 
 void ra4m1_ctrl_restart() {
@@ -58,7 +61,7 @@ void ra4m1_ctrl_restart() {
 
 void ra4m1_ctrl_enter_programming() {
     ESP_LOGI(TAG, "Enter programming mode");
-    _program_mode = true;
+    _self.program_mode = true;
     // Double reset sequence tp enter programming mode
     ra4m1_ctrl_restart();
     vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -68,9 +71,9 @@ void ra4m1_ctrl_enter_programming() {
 void ra4m1_ctrl_exit_programming() {
     ESP_LOGI(TAG, "Exit programming mode");
     ra4m1_ctrl_restart();
-    _program_mode = false;
+    _self.program_mode = false;
 }
 
 bool ra4m1_ctrl_is_programming() {
-    return _program_mode;
+    return _self.program_mode;
 }
