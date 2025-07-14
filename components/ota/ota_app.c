@@ -7,29 +7,33 @@
 
 #include "ota_app.h"
 
+typedef struct {
+    const esp_partition_t *partition;  /*!< Pointer to the OTA partition */
+    esp_ota_handle_t partition_handle; /*!< Handle for the OTA partition */
+    bool image_header_checked;         /*!< Flag indicating if the image header has been checked */
+    size_t binary_file_length;         /*!< Length of the binary file written so far */
+} ota_app_data_t;
+
 static const char *TAG = "ota_app";
 
-static const esp_partition_t *_update_partition;
-static esp_ota_handle_t _update_handle;
-static bool _image_header_checked;
-static size_t _binary_file_length;
+static ota_app_data_t _self;
 
 const esp_partition_t *ota_app_get_partition() {
-  return _update_partition;
+  return _self.partition;
 }
 
 esp_err_t ota_app_begin() {
-  _update_handle = 0;
-  _image_header_checked = false;
-  _binary_file_length = 0;
+  _self.partition_handle = 0;
+  _self.image_header_checked = false;
+  _self.binary_file_length = 0;
 
-  _update_partition = esp_ota_get_next_update_partition(NULL);
-  if (_update_partition == NULL) {
+  _self.partition = esp_ota_get_next_update_partition(NULL);
+  if (_self.partition == NULL) {
     ESP_LOGE(TAG, "Unable to identify an update partition");
     return ESP_FAIL;
   }
   ESP_LOGI(TAG, "Writing to partition subtype %d at offset 0x%"PRIx32,
-            _update_partition->subtype, _update_partition->address);
+            _self.partition->subtype, _self.partition->address);
 
   return ESP_OK;
 }
@@ -38,7 +42,7 @@ esp_err_t ota_app_begin() {
 esp_err_t ota_app_write(char *data, size_t len) {
   esp_err_t err = ESP_OK;
 
-  if (_image_header_checked == false) {
+  if (_self.image_header_checked == false) {
       esp_app_desc_t new_app_info;
       if (len > sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t) + sizeof(esp_app_desc_t)) {
           // check current version with downloading
@@ -72,9 +76,9 @@ esp_err_t ota_app_write(char *data, size_t len) {
               return ESP_FAIL;
           }
 
-          _image_header_checked = true;
+          _self.image_header_checked = true;
 
-          err = esp_ota_begin(_update_partition, OTA_WITH_SEQUENTIAL_WRITES, &_update_handle);
+          err = esp_ota_begin(_self.partition, OTA_WITH_SEQUENTIAL_WRITES, &_self.partition_handle);
           if (err != ESP_OK) {
               ESP_LOGE(TAG, "esp_ota_begin failed (%s)", esp_err_to_name(err));
               return ESP_FAIL;
@@ -85,27 +89,27 @@ esp_err_t ota_app_write(char *data, size_t len) {
       }
   }
 
-  err = esp_ota_write( _update_handle, (const void *)data, len);
+  err = esp_ota_write( _self.partition_handle, (const void *)data, len);
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "esp_ota_write failed (%s)", esp_err_to_name(err));
     return ESP_FAIL;
   }
 
-  _binary_file_length += len;
-  ESP_LOGD(TAG, "Written image length %d", _binary_file_length);
+  _self.binary_file_length += len;
+  ESP_LOGD(TAG, "Written image length %d", _self.binary_file_length);
 
   return err;
 }
 
 esp_err_t ota_app_end() {
   esp_err_t err = ESP_OK;
-  if( _update_handle ) {
-    err = esp_ota_end(_update_handle);
-    _update_handle = 0;
+  if( _self.partition_handle ) {
+    err = esp_ota_end(_self.partition_handle);
+    _self.partition_handle = 0;
     if (err != ESP_OK) {
       ESP_LOGE(TAG, "esp_ota_end failed (%s)", esp_err_to_name(err));
     } else {
-      err = esp_ota_set_boot_partition(_update_partition);
+      err = esp_ota_set_boot_partition(_self.partition);
       if (err != ESP_OK) {
         ESP_LOGE(TAG, "esp_ota_set_boot_partition failed (%s)", esp_err_to_name(err));
       } else {
@@ -117,9 +121,9 @@ esp_err_t ota_app_end() {
 }
 
 void ota_app_abort() {
-  if( _update_handle ) {
-    esp_ota_abort(_update_handle);
-    _update_handle = 0;
+  if( _self.partition_handle ) {
+    esp_ota_abort(_self.partition_handle);
+    _self.partition_handle = 0;
   }
 }
 

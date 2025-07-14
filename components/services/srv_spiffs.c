@@ -6,19 +6,23 @@
 
 #include "srv_spiffs.h"
 
+typedef struct {
+    char base_path[ESP_VFS_PATH_MAX+1];  
+} srv_spiffs_data_t;
+
 static const char *TAG = "srv_spiffs";
 
-static char _base_path[ESP_VFS_PATH_MAX+1];
+static srv_spiffs_data_t _self;
 
 esp_err_t srv_spiffs_start(char* base_path) {
     ESP_LOGI(TAG, "Initializing SPIFFS");
     ESP_ERROR_CHECK(base_path != NULL ? ESP_OK : ESP_FAIL);
 
-    strncpy(_base_path, base_path, ESP_VFS_PATH_MAX);
-    _base_path[ESP_VFS_PATH_MAX] = '\0';
+    strncpy(_self.base_path, base_path, ESP_VFS_PATH_MAX);
+    _self.base_path[ESP_VFS_PATH_MAX] = '\0';
 
     esp_vfs_spiffs_conf_t conf = {
-      .base_path = _base_path,
+      .base_path = _self.base_path,
       .partition_label = NULL,
       .max_files = 4,
       .format_if_mount_failed = false
@@ -57,7 +61,7 @@ to at least 70s to avoid a TWDT watchdog reset ...
 }
 
 esp_err_t srv_spiffs_restart() {
-    return srv_spiffs_start(_base_path);
+    return srv_spiffs_start(_self.base_path);
 }
 
 esp_err_t srv_spiffs_stop(void) {

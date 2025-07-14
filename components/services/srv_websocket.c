@@ -7,16 +7,20 @@
 #include "srv_file.h"
 #include "srv_websocket.h"
 
-static const char *TAG = "srv_websocket";
-
-struct async_resp_arg {
+typedef struct {
     httpd_handle_t hServer;
     int hSocket;
     httpd_ws_frame_t *ws_pkt;
-};
+} async_resp_arg_t;
 
-ws_callback_t _ws_rx_bin_callback;
-httpd_handle_t _server;
+typedef struct {
+    ws_callback_t ws_rx_bin_callback;
+    httpd_handle_t server;    
+} srv_websocket_data_t;
+
+static const char *TAG = "srv_websocket";
+
+static srv_websocket_data_t _self;
 
 /* Add IDF and firmware info */
 static void _json_add_system_info(cJSON *data) {
@@ -63,7 +67,7 @@ static esp_err_t _json_set_network_param(cJSON *data) {
 }
 
 static void _srv_websocket_send_callback(void *arg) {
-    struct async_resp_arg *rep_arg = arg;
+    async_resp_arg_t *rep_arg = arg;
 
     if (rep_arg == NULL || rep_arg->ws_pkt == NULL) {
         ESP_LOGE(TAG, "WS: Invalid argument to _srv_websocket_send_callback");
@@ -107,7 +111,7 @@ cleanup:
 }
 
 // Type for payload allocator function
-typedef esp_err_t (*ws_payload_alloc_fn)(struct async_resp_arg *rep_arg, void *data, uint32_t data_len);
+typedef esp_err_t (*ws_payload_alloc_fn)(async_resp_arg_t *rep_arg, void *data, uint32_t data_len);
 
 /* Generic function for sending websocket frames (text or binary) */
 static esp_err_t _srv_websocket_send(
@@ -122,7 +126,7 @@ static esp_err_t _srv_websocket_send(
         return ESP_ERR_INVALID_ARG;
     }
     
-    struct async_resp_arg *rep_arg = malloc(sizeof(struct async_resp_arg));
+    async_resp_arg_t *rep_arg = malloc(sizeof(async_resp_arg_t));
     if (rep_arg == NULL) {
         return ESP_ERR_NO_MEM;
     }
@@ -155,7 +159,7 @@ static esp_err_t _srv_websocket_send(
 }
 
 // Allocator for JSON payload (text)
-static esp_err_t _ws_payload_alloc_json(struct async_resp_arg *rep_arg, void *data, uint32_t data_len) {
+static esp_err_t _ws_payload_alloc_json(async_resp_arg_t *rep_arg, void *data, uint32_t data_len) {
     cJSON *msg = (cJSON *)data;
     if (msg == NULL) {
         ESP_LOGE(TAG, "JSON message is NULL");
@@ -169,7 +173,7 @@ static esp_err_t _ws_payload_alloc_json(struct async_resp_arg *rep_arg, void *da
 }
 
 // Allocator for binary payload
-static esp_err_t _ws_payload_alloc_bin(struct async_resp_arg *rep_arg, void *data, uint32_t data_len) {
+static esp_err_t _ws_payload_alloc_bin(async_resp_arg_t *rep_arg, void *data, uint32_t data_len) {
     if (data_len == 0 || data == NULL) return ESP_ERR_INVALID_ARG;
     rep_arg->ws_pkt->payload = malloc(data_len);
     if (!rep_arg->ws_pkt->payload) return ESP_ERR_NO_MEM;
@@ -216,7 +220,7 @@ esp_err_t srv_websocket_send_bin(uint8_t *buffer, uint32_t buffer_length) {
         return ESP_ERR_INVALID_ARG;
     }
     return _srv_websocket_send(
-        _server, -1, HTTPD_WS_TYPE_BINARY, _ws_payload_alloc_bin, buffer, buffer_length);
+        _self.server, -1, HTTPD_WS_TYPE_BINARY, _ws_payload_alloc_bin, buffer, buffer_length);
 }
 
 /* Handler processing incoming requests  */
@@ -291,8 +295,8 @@ esp_err_t srv_websocket_get_handler(httpd_req_t *req) {
                     cJSON_Delete(json);
                     break;
                 case HTTPD_WS_TYPE_BINARY:
-                    if (_ws_rx_bin_callback) {
-                        _ws_rx_bin_callback(ws_pkt.payload, ws_pkt.len);
+                    if (_self.ws_rx_bin_callback) {
+                        _self.ws_rx_bin_callback(ws_pkt.payload, ws_pkt.len);
                     } else {
                         ESP_LOGW(TAG, "No binary WebSocket callback registered, binary message ignored");
                     }
@@ -315,7 +319,7 @@ esp_err_t srv_websocket_get_handler(httpd_req_t *req) {
 /* Initialize websocket service*/
 esp_err_t srv_websocket_init(httpd_handle_t server, ws_callback_t ws_rx_bin_callback) {
     ESP_LOGI(TAG, "Setup websocket service");
-    _server = server;
-    _ws_rx_bin_callback = ws_rx_bin_callback;
+    _self.server = server;
+    _self.ws_rx_bin_callback = ws_rx_bin_callback;
     return ESP_OK;
 }

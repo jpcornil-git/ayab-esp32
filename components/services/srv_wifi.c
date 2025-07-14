@@ -6,17 +6,22 @@
 #include "app_define.h"
 #include "srv_wifi.h"
 
+#define MAX_STA_CONNECT_RETRIES 3
+
+typedef struct {
+    EventGroupHandle_t event_group; /**< Event group for WiFi events */
+    esp_netif_t *netif_handle;      /**< Network interface handle for WiFi */
+    int sta_connect_retries;        /**< Number of connection retries for STA mode */
+    bool initialized;               /**< Flag indicating if WiFi is initialized */
+} srv_wifi_data_t;
 
 static const char *TAG = "srv_wifi";
 
-static esp_netif_t *wifi_netif_handle = NULL;
-
-#define MAX_STA_CONNECT_RETRIES 3
-static int sta_connect_retries = 0;
-
-static EventGroupHandle_t wifi_event_group; 
-
-static bool wifi_initialized = false;
+static srv_wifi_data_t _self = {
+    .netif_handle = NULL,
+    .sta_connect_retries = 0,
+    .initialized = false,
+};
 
 // Wifi event handler
 static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
@@ -25,25 +30,25 @@ static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT) {
         // STA Mode events
         if (event_id == WIFI_EVENT_STA_START) {
-            sta_connect_retries = 0;
+            _self.sta_connect_retries = 0;
             esp_wifi_connect();
             ESP_LOGI(TAG, "Starting STA mode.");
         } else if (event_id == WIFI_EVENT_STA_CONNECTED) {       
             wifi_event_sta_connected_t *event = (wifi_event_sta_connected_t *)event_data;
-            xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECTED_EVENT); 
+            xEventGroupSetBits(_self.event_group, WIFI_STA_CONNECTED_EVENT); 
             ESP_LOGI(TAG, "Connected to AP (ssid=%s, channel=%d)", event->ssid, event->channel);           
         } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {       
-            if (sta_connect_retries < MAX_STA_CONNECT_RETRIES) {
-                sta_connect_retries++;
+            if (_self.sta_connect_retries < MAX_STA_CONNECT_RETRIES) {
+                _self.sta_connect_retries++;
                 esp_wifi_connect();
-                ESP_LOGI(TAG, "Disconnected from AP, trying to reconnect ... (attempt %d/%d).", sta_connect_retries, MAX_STA_CONNECT_RETRIES);
+                ESP_LOGI(TAG, "Disconnected from AP, trying to reconnect ... (attempt %d/%d).", _self.sta_connect_retries, MAX_STA_CONNECT_RETRIES);
             } else {
-                xEventGroupSetBits(wifi_event_group, WIFI_STA_CANT_CONNECT_EVENT);
+                xEventGroupSetBits(_self.event_group, WIFI_STA_CANT_CONNECT_EVENT);
                 ESP_LOGI(TAG, "Failed to reconnect to AP after %d attempts.", MAX_STA_CONNECT_RETRIES);
             }
         // AP Mode events
         } else if (event_id == WIFI_EVENT_AP_START) {
-            xEventGroupSetBits(wifi_event_group, WIFI_AP_CONNECTED_EVENT);
+            xEventGroupSetBits(_self.event_group, WIFI_AP_CONNECTED_EVENT);
             ESP_LOGI(TAG, "Starting AP mode.");
         } else if (event_id == WIFI_EVENT_AP_STACONNECTED) {
             wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *)event_data;
@@ -57,8 +62,8 @@ static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
     // IP events
     } else if (event_base == IP_EVENT) {
         if (event_id == IP_EVENT_STA_GOT_IP) {
-            sta_connect_retries = 0;
-            xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECTED_EVENT);
+            _self.sta_connect_retries = 0;
+            xEventGroupSetBits(_self.event_group, WIFI_STA_CONNECTED_EVENT);
             ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
             ESP_LOGI(TAG, "Connected to AP with IP = " IPSTR, IP2STR(&event->ip_info.ip));
         }
@@ -66,12 +71,12 @@ static void _wifi_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 void _wifi_start_common(EventGroupHandle_t event_group)  {
-    wifi_event_group = event_group;
+    _self.event_group = event_group;
 
-    if (!wifi_initialized) {
+    if (!_self.initialized) {
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
         ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-        wifi_initialized = true;
+        _self.initialized = true;
     }
 
     // Unregister the event handler first to avoid duplicate handlers if switching modes
@@ -83,7 +88,7 @@ void srv_wifi_start_STA(EventGroupHandle_t event_group, const char* ssid, const 
     _wifi_start_common(event_group);
 
     // Initialize Wi-Fi including netif with default STA config
-    wifi_netif_handle = esp_netif_create_default_wifi_sta();
+    _self.netif_handle = esp_netif_create_default_wifi_sta();
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA)); 
 
     wifi_config_t wifi_config = {0};
@@ -100,7 +105,7 @@ void srv_wifi_start_AP(EventGroupHandle_t event_group) {
     _wifi_start_common(event_group);
 
     // Initialize Wi-Fi including netif with default AP config
-    wifi_netif_handle = esp_netif_create_default_wifi_ap();
+    _self.netif_handle = esp_netif_create_default_wifi_ap();
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
 
     wifi_config_t wifi_config = {
@@ -116,7 +121,7 @@ void srv_wifi_start_AP(EventGroupHandle_t event_group) {
 
     char ip_addr[INET_ADDRSTRLEN];
     esp_netif_ip_info_t ip_info;
-    esp_netif_get_ip_info(wifi_netif_handle, &ip_info);
+    esp_netif_get_ip_info(_self.netif_handle, &ip_info);
     inet_ntoa_r(ip_info.ip.addr, ip_addr, INET_ADDRSTRLEN);
     ESP_LOGI(TAG, "softAP on IP: %s", ip_addr);
 }
@@ -129,9 +134,9 @@ void srv_wifi_stop(void) {
     // Always try to unregister the event handler and deinit WiFi
     ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &_wifi_event_handler));
     esp_wifi_deinit();
-    wifi_initialized = false;
-    if (wifi_netif_handle != NULL) {
-        esp_netif_destroy(wifi_netif_handle);
-        wifi_netif_handle = NULL;
+    _self.initialized = false;
+    if (_self.netif_handle != NULL) {
+        esp_netif_destroy(_self.netif_handle);
+        _self.netif_handle = NULL;
     }
 }
