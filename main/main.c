@@ -10,6 +10,7 @@
 
 #include "app_define.h"
 #include "app_config.h"
+#include "ota_app.h"
 #include "ra4m1_ctrl.h"
 #include "ra4m1_uart.h"
 #include "ra4m1_samba.h"
@@ -146,7 +147,9 @@ void app_main() {
             wifi_interface_t wifi_interface = (event_bits & WIFI_AP_CONNECTED_EVENT) ? WIFI_IF_AP : WIFI_IF_STA;
             srv_mdns_start(app_config_get(NVS_HOSTNAME), wifi_interface, APP_MDNS_SERVICE_TYPE, serviceTxtData, sizeof(serviceTxtData) / sizeof(mdns_txt_item_t));
             // Start the http server    
-            srv_http_start(SPIFFS_BASE_PATH, ws_rx_bin_callback);
+            esp_err_t err = srv_http_start(SPIFFS_BASE_PATH, ws_rx_bin_callback);
+            // Validate or rollback ESP32 firmware after an OTA update
+            ota_app_validate(err);
         } else if (event_bits & WIFI_STA_CANT_CONNECT_EVENT) {
             ESP_LOGI(TAG, "Unable to connect as STA, switching to softAP mode");
             srv_http_stop();
