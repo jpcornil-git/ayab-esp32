@@ -47,7 +47,17 @@ static mdns_txt_item_t serviceTxtData[] = {
     {.key = "api_ver" , .value = API_VERSION}
 };
 
-// Called from a different task context -> use a queue to forward data to ra4m1 uart
+/**
+ * @brief Callback function for WebSocket binary data reception.
+ *
+ * This function is called when binary data is received over the WebSocket.
+ * It forwards the received data to the RA4M1 UART interface for transmission
+ * using a message queue as they runin different tasks.
+ *
+ * @param payload Pointer to the received data.
+ * @param len Length of the received data in bytes.
+ * @return BaseType_t pdTRUE if the message was sent successfully, pdFALSE otherwise.
+ */
 BaseType_t ws_rx_bin_callback(const uint8_t *payload, size_t len) {
     BaseType_t rv= pdFALSE;
     uart_msg_t msg;
@@ -69,6 +79,13 @@ BaseType_t ws_rx_bin_callback(const uint8_t *payload, size_t len) {
     return rv;
 }
 
+/**
+ * @brief Initialize the application setup.
+ *
+ * This function initializes the event loop, event group, and message queue,
+ * sets up the RA4M1 interfaces, initializes NVS, configures SPIFFS, and
+ * attempts to update the RA4M1 firmware at first boot.
+ */
 void app_setup() {
     // Create the default event loop
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -123,6 +140,13 @@ void app_setup() {
     }
 }
 
+/**
+ * @brief Main application entry point.
+ *
+ * This function initializes the application, sets up the RA4M1 interfaces,
+ * and starts the WiFi and HTTP servers. It also handles events from the
+ * RA4M1 UART interface and WebSocket communication.
+ */
 void app_main() {   
     ESP_LOGI(TAG, "ayab-webapp starting");
 
