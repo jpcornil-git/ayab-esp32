@@ -20,7 +20,7 @@ static srv_http_data_t _self = {
     .server = NULL,
 };
 
-void srv_http_start(const char *base_path, ws_callback_t ws_rx_bin_callback) {
+esp_err_t srv_http_start(const char *base_path, ws_callback_t ws_rx_bin_callback) {
 
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
@@ -58,8 +58,7 @@ void srv_http_start(const char *base_path, ws_callback_t ws_rx_bin_callback) {
         // Start file service (should be called after above code as it registers uri as well)
         srv_file_start(_self.server, base_path, SRV_HTTP_PATH_WWW);
     }
-    // Rollback in case of error after a fisrt App execution
-    ota_app_validate(err);
+    return err;
 }
 
 void srv_http_stop() {

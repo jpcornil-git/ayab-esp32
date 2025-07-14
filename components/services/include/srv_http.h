@@ -32,8 +32,9 @@ typedef BaseType_t (*ws_callback_t)(const uint8_t *payload, size_t len);
  *
  * @param base_path           Base path for static file serving.
  * @param ws_rx_bin_callback  Callback for handling websocket binary frames.
+ * @return ESP_OK on success, or an error code on failure.
  */
-void srv_http_start(const char *base_path, ws_callback_t ws_rx_bin_callback);
+ esp_err_t srv_http_start(const char *base_path, ws_callback_t ws_rx_bin_callback);
 
 /**
  * @brief Stop the HTTP server and release resources.
