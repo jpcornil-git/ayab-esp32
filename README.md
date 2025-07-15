@@ -1,3 +1,5 @@
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/jpcornil-git/ayab-esp32)
+
 # ESP32 WebApp platform for Ayab
 
 **UnoR4 WiFi** (esp32s3) platform to support ayab webapp development
