@@ -297,40 +297,57 @@ static esp_err_t _upload_post_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-// Populate JSON data with list of all files (name, sie, [url])
-void srv_file_json_list_files(cJSON *list_files) {
-    char entrypath[FILE_PATH_MAX];
+// Populate JSON data with list of all files in a directory (name, size, [url])
+void srv_file_json_list_dir(char *entrypath, cJSON *json_entries) {
     struct dirent *entry;
     struct stat entry_stat;
 
-    /* Open root directory */
-    snprintf(entrypath, FILE_PATH_MAX, "%s/", _self.root_path);
     DIR *dir = opendir(entrypath);
     if (!dir) {
-        ESP_LOGE(TAG, "%s", "Failed to open root directory");
+        ESP_LOGE(TAG, "Failed to open %s directory", entrypath);
         return;
     }
 
-    // FIXME: Add error handling ...
-    cJSON *json_entries = cJSON_CreateArray();
-    cJSON_AddItemToObject(list_files, "list_files", json_entries);
     /* Iterate over all files / folders and fetch their names and sizes */
+    size_t entry_path_len = strlen(entrypath);
     while ((entry = readdir(dir)) != NULL) {
-        strlcpy(entrypath + _self.root_path_len + 1, entry->d_name, sizeof(entrypath) - _self.root_path_len -1);
+        strlcat(entrypath, entry->d_name, FILE_PATH_MAX -1);
         if (stat(entrypath, &entry_stat) == -1) {
             ESP_LOGE(TAG, "Failed to stat : %s", entry->d_name);
             continue;
         }
-        // Build JSON dictionnary for this entry
-        cJSON *json_entry = cJSON_CreateObject();
-        cJSON_AddItemToArray(json_entries, json_entry);
-        cJSON_AddStringToObject(json_entry, "name", entry->d_name);
-        cJSON_AddNumberToObject(json_entry, "size", entry_stat.st_size);
-        if (!strncmp(_self.base_path, entrypath, _self.base_path_len)) {
-            cJSON_AddStringToObject(json_entry, "url" , entrypath+_self.base_path_len);
+        if (S_ISDIR(entry_stat.st_mode)) {
+            /* Entry is a directory, add '/' to the end of the name and
+             * recursively list the directory */
+            strlcat(entrypath, "/", FILE_PATH_MAX -1);
+            srv_file_json_list_dir(entrypath, json_entries);   
+        } else {
+            /* Entry is a file, build JSON dictionnary for this entry */
+            cJSON *json_entry = cJSON_CreateObject();
+            cJSON_AddItemToArray(json_entries, json_entry);
+            cJSON_AddStringToObject(json_entry, "name", entrypath+_self.root_path_len);
+            cJSON_AddNumberToObject(json_entry, "size", entry_stat.st_size);
+            if (!strncmp(_self.base_path, entrypath, _self.base_path_len)) {
+                cJSON_AddStringToObject(json_entry, "url" , entrypath+_self.base_path_len);
+            }            
         }
+        entrypath[entry_path_len] = 0; // Reset to parent path
     }
     closedir(dir);
+}
+
+// Populate JSON data with list of all files on the file system
+void srv_file_json_list_files(cJSON *list_files) {
+    char entrypath[FILE_PATH_MAX];
+
+    // FIXME: Add error handling ...
+    cJSON *json_entries = cJSON_CreateArray();
+    cJSON_AddItemToObject(list_files, "list_files", json_entries);
+
+    /* Start from root directory */
+    snprintf(entrypath, FILE_PATH_MAX, "%s/", _self.root_path);
+
+    srv_file_json_list_dir(entrypath, json_entries);
 }
 
 /* Delete file listed in JSON data*/
