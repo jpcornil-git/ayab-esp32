@@ -23,12 +23,12 @@
 #include "esp_log.h"
 
 #include "esp_vfs.h"
-#include "esp_spiffs.h"
+#include "esp_littlefs.h"
 
 #include "srv_file.h"
 
 /* Max length a file path can have on storage */
-#define FILE_PATH_MAX (ESP_VFS_PATH_MAX + CONFIG_SPIFFS_OBJ_NAME_LEN)
+#define FILE_PATH_MAX (ESP_VFS_PATH_MAX + CONFIG_LITTLEFS_OBJ_NAME_LEN)
 #define UPLOAD_SCRIPT_HTM "upload_script.htm"
 #define IS_FILE_EXT(filename, ext) \
     (strcasecmp(&filename[strlen(filename) - sizeof(ext) + 1], ext) == 0)
@@ -43,7 +43,7 @@
 
 typedef struct  {
     bool is_running;
-    /* SPIFFS root path*/
+    /* LITTLEFS root path*/
     char root_path[ESP_VFS_PATH_MAX + 1];
     size_t root_path_len;
     /* Base path for www files */

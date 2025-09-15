@@ -14,10 +14,10 @@
 
 #define RA4M1_SAMBA_BAUDRATE 230400
 
-// SPIFFS
-#define SPIFFS_BASE_PATH "/spiffs"
+// LITTLEFS
+#define LITTLEFS_BASE_PATH "/littlefs"
 #define DEFAULT_FIRMWARE "firmware.bin"
-#define FIRST_BOOT (SPIFFS_BASE_PATH "/" "firstBoot")
+#define FIRST_BOOT (LITTLEFS_BASE_PATH "/" "firstBoot")
 
 // NVS
 #define NVS_APP_PARTITION "ayab"

@@ -11,8 +11,8 @@
 - mDNS server to access device by name rather than IP address (default=ayab.local) 
 - websocket to serial proxy enabling ayab api over a network (with webapp or ayab-desktop)
 - http server to access the ayab webapp
-- SPIFFS file system to store http server files (html, css, js, ...)
-- Over-The-Air (OTA) updates for esp32 firmware, ayab (RA4M1) firmware or SPIFFS (partition or individual files)
+- LITTLEFS file system to store http server files (html, css, js, ...)
+- Over-The-Air (OTA) updates for esp32 firmware, ayab (RA4M1) firmware or LITTLEFS (partition or individual files)
 
 ## How to build
 - Clone this repository

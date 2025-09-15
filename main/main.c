@@ -15,7 +15,7 @@
 #include "ra4m1_uart.h"
 #include "ra4m1_samba.h"
 #include "ra4m1_flash.h"
-#include "srv_spiffs.h"
+#include "srv_littlefs.h"
 #include "srv_http.h"
 #include "srv_mdns.h"
 #include "srv_websocket.h"
@@ -83,7 +83,7 @@ BaseType_t ws_rx_bin_callback(const uint8_t *payload, size_t len) {
  * @brief Initialize the application setup.
  *
  * This function initializes the event loop, event group, and message queue,
- * sets up the RA4M1 interfaces, initializes NVS, configures SPIFFS, and
+ * sets up the RA4M1 interfaces, initializes NVS, configures LITTLEFS, and
  * attempts to update the RA4M1 firmware at first boot.
  */
 void app_setup() {
@@ -121,8 +121,8 @@ void app_setup() {
         ESP_LOGI(TAG, "NVS partition (" NVS_APP_PARTITION ") initialized");
     }; 
 
-    // Initialise SPIFFS file system
-    srv_spiffs_start(SPIFFS_BASE_PATH);
+    // Initialise LITTLEFS file system
+    srv_littlefs_start(LITTLEFS_BASE_PATH);
 
     // Initialize the networking stack
     ESP_ERROR_CHECK(esp_netif_init());
@@ -132,7 +132,7 @@ void app_setup() {
     if (stat(FIRST_BOOT, &st) == 0) {
         ESP_LOGI(TAG, "First boot ... updating RA4M1 firmware");
         // Update firmware and release reset pin      
-        ra4m1_flash_image(SPIFFS_BASE_PATH "/" DEFAULT_FIRMWARE);
+        ra4m1_flash_image(LITTLEFS_BASE_PATH "/" DEFAULT_FIRMWARE);
         // Remove file even if above fails, i.e. only try once
         unlink(FIRST_BOOT);
     } else {
@@ -171,7 +171,7 @@ void app_main() {
             wifi_interface_t wifi_interface = (event_bits & WIFI_AP_CONNECTED_EVENT) ? WIFI_IF_AP : WIFI_IF_STA;
             srv_mdns_start(app_config_get(NVS_HOSTNAME), wifi_interface, APP_MDNS_SERVICE_TYPE, serviceTxtData, sizeof(serviceTxtData) / sizeof(mdns_txt_item_t));
             // Start the http server    
-            esp_err_t err = srv_http_start(SPIFFS_BASE_PATH, ws_rx_bin_callback);
+            esp_err_t err = srv_http_start(LITTLEFS_BASE_PATH, ws_rx_bin_callback);
             // Validate or rollback ESP32 firmware after an OTA update
             ota_app_validate(err == ESP_OK);
         } else if (event_bits & WIFI_STA_CANT_CONNECT_EVENT) {

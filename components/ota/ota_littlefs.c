@@ -2,30 +2,30 @@
 
 #include "esp_log.h"
 
-#include "srv_spiffs.h"
-#include "ota_spiffs.h"
+#include "srv_littlefs.h"
+#include "ota_littlefs.h"
 
 typedef struct {
-    const esp_partition_t* partition;  /*!< Pointer to the SPIFFS partition */
+    const esp_partition_t* partition;  /*!< Pointer to the LITTLEFS partition */
     size_t partition_offset;           /*!< Current offset in the partition */
     char* buffer;                      /*!< Buffer for writing data */
     size_t buffer_offset;              /*!< Current offset in the buffer */
-} ota_spiffs_data_t;
+} ota_littlefs_data_t;
 
-static const char *TAG = "ota_spiffs";
+static const char *TAG = "ota_littlefs";
 
-static ota_spiffs_data_t _self;
+static ota_littlefs_data_t _self;
 
-const esp_partition_t *ota_spiffs_get_partition() {
+const esp_partition_t *ota_littlefs_get_partition() {
   return _self.partition;
 }
 
-esp_err_t ota_spiffs_begin() {
+esp_err_t ota_littlefs_begin() {
     _self.buffer_offset = 0;
     _self.partition_offset = 0;
-    _self.partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_SPIFFS, NULL);
+    _self.partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_LITTLEFS, NULL);
     if( ! _self.partition) {
-        ESP_LOGE(TAG, "No SPIFFS partion found !");
+        ESP_LOGE(TAG, "No LITTLEFS partion found !");
         return ESP_FAIL;
     }
 
@@ -35,7 +35,7 @@ esp_err_t ota_spiffs_begin() {
         return ESP_FAIL;
     }
 
-    srv_spiffs_stop();
+    srv_littlefs_stop();
 
     ESP_LOGI(TAG, "Writing to partition subtype %d at offset 0x%"PRIx32"(size = 0x%"PRIx32")",
             _self.partition->subtype, _self.partition->address, _self.partition->size);
@@ -43,18 +43,18 @@ esp_err_t ota_spiffs_begin() {
     return ESP_OK;
 }
 
-esp_err_t _ota_spiffs_writeBuffer(size_t len) {
+esp_err_t _ota_littlefs_writeBuffer(size_t len) {
     esp_err_t err = ESP_OK;
 
     err = esp_partition_erase_range(_self.partition, _self.partition_offset, _self.partition->erase_size);
     if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Unable to erase spiffs sector @ 0x%08x (%s)", _self.partition_offset, esp_err_to_name(err));
+            ESP_LOGE(TAG, "Unable to erase littlefs sector @ 0x%08x (%s)", _self.partition_offset, esp_err_to_name(err));
             return ESP_FAIL;            
     }
 
     err = esp_partition_write(_self.partition, _self.partition_offset, _self.buffer, len);
     if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Unable to write spiffs sector @ 0x%08x (%s)", _self.partition_offset, esp_err_to_name(err));
+            ESP_LOGE(TAG, "Unable to write littlefs sector @ 0x%08x (%s)", _self.partition_offset, esp_err_to_name(err));
             return ESP_FAIL;            
     }
     //ESP_LOGI(TAG, "Wrote %d bytes at 0x%08x", len , _self.partition_offset);
@@ -62,8 +62,8 @@ esp_err_t _ota_spiffs_writeBuffer(size_t len) {
 }
 
 // TODO: Add support for compressed FS ?
-esp_err_t ota_spiffs_write(char *data, size_t len) {
-    // FIXME: Need to check content to make sure it is a spiffs binary
+esp_err_t ota_littlefs_write(char *data, size_t len) {
+    // FIXME: Need to check content to make sure it is a littlefs binary
     if ((_self.partition_offset + len) > _self.partition->size) {
         ESP_LOGE(TAG, "Not enough space left on flash!");
         return ESP_FAIL;
@@ -74,7 +74,7 @@ esp_err_t ota_spiffs_write(char *data, size_t len) {
         size_t data_to_cpy = _self.partition->erase_size - _self.buffer_offset;
         memcpy(_self.buffer + _self.buffer_offset, data + (len - data_left), data_to_cpy);
 
-        if (_ota_spiffs_writeBuffer(_self.partition->erase_size) != ESP_OK) {
+        if (_ota_littlefs_writeBuffer(_self.partition->erase_size) != ESP_OK) {
             return ESP_FAIL;   
         }
 
@@ -89,22 +89,22 @@ esp_err_t ota_spiffs_write(char *data, size_t len) {
     return ESP_OK;
 }
 
-esp_err_t ota_spiffs_end() {
+esp_err_t ota_littlefs_end() {
     esp_err_t err = ESP_OK;
 
     if (_self.buffer_offset != 0) {
-        err = _ota_spiffs_writeBuffer(_self.buffer_offset);
+        err = _ota_littlefs_writeBuffer(_self.buffer_offset);
     }
 
     free(_self.buffer);
-    ESP_LOGI(TAG, "OTA spiffs update succeeded");
+    ESP_LOGI(TAG, "OTA littlefs update succeeded");
 
-    srv_spiffs_restart();
+    srv_littlefs_restart();
     
     return err;
 }
 
-void ota_spiffs_abort() {
+void ota_littlefs_abort() {
     free(_self.buffer);
-    ESP_LOGI(TAG, "OTA spiffs update aborted");
+    ESP_LOGI(TAG, "OTA littlefs update aborted");
 }

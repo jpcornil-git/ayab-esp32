@@ -1,7 +1,9 @@
-# Name,   Type, SubType, Offset,  Size, Flags
-nvs,      data, nvs,     0x9000,  0x4000,
-otadata,  data, ota,     0xd000,  0x2000,
-phy_init, data, phy,     0xf000,  0x1000,
-app0,     app,  ota_0,         , 1M,
-app1,     app,  ota_1,         , 1M,
-spiffs,   data, spiffs,        , 0x5f0000,
+# Name  , Type, SubType , Offset  , Size , Flags
+# bootloader                   0x0,   32K,
+# partition table           0x8000,    4K,
+nvs     , data, nvs     ,   0x9000,   16K,
+otadata , data, ota     ,   0xd000,    8K,
+phy_init, data, phy     ,   0xf000,    4K,
+app0    , app , ota_0   ,  0x10000, 1024K,
+app1    , app , ota_1   , 0x110000, 1024K,
+littlefs, data, littlefs, 0x210000, 6080K,

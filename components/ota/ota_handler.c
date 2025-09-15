@@ -5,11 +5,11 @@
 
 #include "ota_handler.h"
 #include "ota_app.h"
-#include "ota_spiffs.h"
+#include "ota_littlefs.h"
 #include "ra4m1_flash.h"
 
 #define OTA_ESP32_APP      0
-#define OTA_ESP32_SPIFFS   1
+#define OTA_ESP32_LITTLEFS 1
 #define OTA_RA4M1_FIRMWARE 2
 #define OTA_BUFFER_SIZE 8192
 
@@ -24,8 +24,8 @@ typedef struct {
 static const char *TAG = "ota_handler";
 
 static ota_func_t ota_types[] = {
-    { .begin = ota_app_begin,     .write = ota_app_write,     .end = ota_app_end,     .abort = ota_app_abort    ,  .get_partition = ota_app_get_partition},
-    { .begin = ota_spiffs_begin,  .write = ota_spiffs_write,  .end = ota_spiffs_end,  .abort = ota_spiffs_abort ,  .get_partition = ota_spiffs_get_partition},
+    { .begin = ota_app_begin,     .write = ota_app_write,     .end = ota_app_end,     .abort = ota_app_abort,      .get_partition = ota_app_get_partition},
+    { .begin = ota_littlefs_begin,.write = ota_littlefs_write,.end = ota_littlefs_end,.abort = ota_littlefs_abort, .get_partition = ota_littlefs_get_partition},
     { .begin = ra4m1_flash_begin, .write = ra4m1_flash_write, .end = ra4m1_flash_end, .abort = ra4m1_flash_abort , .get_partition = ra4m1_flash_get_partition},
 };
 
@@ -44,8 +44,8 @@ esp_err_t ota_post_handler(httpd_req_t *req) {
             if (httpd_query_key_value(query_buf, "binaryType", value, sizeof(value)) == ESP_OK) {
                 if (!strcmp("esp32_app", value)) {
                     ota_type = OTA_ESP32_APP;
-                } else if (!strcmp("esp32_spiffs", value)) {
-                    ota_type = OTA_ESP32_SPIFFS;
+                } else if (!strcmp("esp32_littlefs", value)) {
+                    ota_type = OTA_ESP32_LITTLEFS;
                 } else if (!strcmp("ra4m1_app", value)) {
                     ota_type = OTA_RA4M1_FIRMWARE;
                 }

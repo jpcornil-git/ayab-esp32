@@ -1,7 +1,7 @@
 set(COMPONENT_SRCS
     ota_handler.c    
     ota_app.c
-    ota_spiffs.c
+    ota_littlefs.c
 )
 
 set(COMPONENT_PUBLIC_INCLUDE_DIRS

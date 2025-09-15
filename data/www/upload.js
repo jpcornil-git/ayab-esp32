@@ -1,7 +1,7 @@
 function uploadFile() {
-    var filePath = document.getElementById("spiffsFilepath").value;
+    var filePath = document.getElementById("littlefsFilepath").value;
     var upload_path = `/upload/${filePath}`;
-    var fileInput = document.getElementById("spiffsFileInput").files;
+    var fileInput = document.getElementById("littlefsFileInput").files;
 
     if (fileInput.length == 0) {
         alert("No file selected!");
@@ -14,9 +14,9 @@ function uploadFile() {
     } else if (fileInput[0].size > 100*1024) {
         alert("File size must be less than 100KB!");
     } else {
-        document.getElementById("spiffsFileInput").disabled = true;
-        document.getElementById("spiffsFilepath").disabled = true;
-        document.getElementById("spiffsUploadButton").disabled = true;
+        document.getElementById("littlefsFileInput").disabled = true;
+        document.getElementById("littlefsFilepath").disabled = true;
+        document.getElementById("littlefsUploadButton").disabled = true;
 
         var file = fileInput[0];
         var xhr = new XMLHttpRequest();
@@ -29,9 +29,9 @@ function uploadFile() {
                 } else {
                     alert(xhr.status + "Error!\n" + xhr.responseText);
                 }
-                document.getElementById("spiffsFileInput").disabled = false;
-                document.getElementById("spiffsFilepath").disabled = false;
-                document.getElementById("spiffsUploadButton").disabled = false;
+                document.getElementById("littlefsFileInput").disabled = false;
+                document.getElementById("littlefsFilepath").disabled = false;
+                document.getElementById("littlefsUploadButton").disabled = false;
                 menuGo("tools");          
             }
         };

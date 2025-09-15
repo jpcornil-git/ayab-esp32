@@ -2,7 +2,7 @@ set(COMPONENT_SRCS
     srv_file.c
     srv_http.c
     srv_mdns.c
-    srv_spiffs.c
+    srv_littlefs.c
     srv_websocket.c
     srv_wifi.c
 )
@@ -21,7 +21,7 @@ set(COMPONENT_REQUIRES
 set(COMPONENT_PRIV_REQUIRES
     esp_app_format
     esp_partition
-    spiffs
+    littlefs
     app_config
     ota
     ra4m1

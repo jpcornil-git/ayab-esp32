@@ -8,12 +8,12 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 # set(PROJECT_VER "0.0.0")
 project(ayab-esp32)
 
-# Create spiffs partition image
-set(SPIFFS_PARTITION_NAME "spiffs")
-set(SPIFFS_DATA_DIR "${PROJECT_DIR}/data")
-spiffs_create_partition_image(
-    "${SPIFFS_PARTITION_NAME}"
-    "${SPIFFS_DATA_DIR}"
+# Create littlefs partition image
+set(LITTLEFS_PARTITION_NAME "littlefs")
+set(LITTLEFS_DATA_DIR "${PROJECT_DIR}/data")
+littlefs_create_partition_image(
+    "${LITTLEFS_PARTITION_NAME}"
+    "${LITTLEFS_DATA_DIR}"
     FLASH_IN_PROJECT
 )
 
@@ -32,4 +32,4 @@ add_dependencies(create_flash_image app)
 add_dependencies(create_flash_image bootloader)
 add_dependencies(create_flash_image partition-table)
 add_dependencies(create_flash_image blank_ota_data)
-add_dependencies(create_flash_image spiffs_${SPIFFS_PARTITION_NAME}_bin)
+add_dependencies(create_flash_image littlefs_${LITTLEFS_PARTITION_NAME}_bin)

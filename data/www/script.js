@@ -134,12 +134,12 @@ function handleJSONMessage(data) {
                 }                
                 break;
             case ws_api.repListFiles:
-                container = document.getElementById('spiffs-table');
+                container = document.getElementById('littlefs-table');
                 fileTable = message.data.list_files;
                 if (fileTable.length !== 0) {                  
                     // Add table header
                     let tableHTML = '<table>';
-                    tableHTML += '<thead><tr><th><button id="spiffs-deleteButton">Delete</button></th><th>Name</th><th>Size</th></tr></thead>';
+                    tableHTML += '<thead><tr><th><button id="littlefs-deleteButton">Delete</button></th><th>Name</th><th>Size</th></tr></thead>';
                     // Add table body
                     tableHTML += '<tbody>';
                     fileTable.forEach(item => {
@@ -155,28 +155,28 @@ function handleJSONMessage(data) {
                     });
                     tableHTML += '</tbody>';
                     tableHTML += '</table>';
-                    tableHTML += '<div id="spiffs-status"></div>';
+                    tableHTML += '<div id="littlefs-status"></div>';
                     container.innerHTML = tableHTML;
                 }
 
-                spiffsDeleteButton = document.getElementById('spiffs-deleteButton');
-                spiffsStatus = document.getElementById('spiffs-status');
-                spiffsDeleteButton.addEventListener('click', (event) => {
+                littlefsDeleteButton = document.getElementById('littlefs-deleteButton');
+                littlefsStatus = document.getElementById('littlefs-status');
+                littlefsDeleteButton.addEventListener('click', (event) => {
                     const selectedIds = getSelectedRowIds('row-checkbox').map(name => `/${name}`);
                     if (selectedIds.length > 0) {
-                        spiffsStatus.textContent = `Selected files: ${selectedIds.join(', ')}`;
+                        littlefsStatus.textContent = `Selected files: ${selectedIds.join(', ')}`;
                         sendWebSocketMessage({ id: ws_api.reqDeleteFiles, list_files: selectedIds});
                     } else {
-                        spiffsStatus.textContent = 'No files selected.';
+                        littlefsStatus.textContent = 'No files selected.';
                     }
                 });                
                 break;
             case ws_api.repDeleteFiles:
-                spiffsStatus = document.getElementById('spiffs-status');
+                littlefsStatus = document.getElementById('littlefs-status');
                 if (message.result === 0) {
-                    spiffsStatus.textContent = 'File(s) deleted.';
+                    littlefsStatus.textContent = 'File(s) deleted.';
                 } else {
-                    spiffsStatus.textContent = 'Error occured.';
+                    littlefsStatus.textContent = 'Error occured.';
                 }
                 // Update file table
                 sendWebSocketMessage({ id: ws_api.reqListFiles });
@@ -321,21 +321,21 @@ document.addEventListener('DOMContentLoaded', () => {
             main: `
                 <table><tbody>
                     <tr>
-                        <td colspan="3"><h2>SPIFFS Directory</h2></td>
+                        <td colspan="3"><h2>littlefs Directory</h2></td>
                     </tr><tr>
                         <td colspan="2">Select a file</td>
                         <td>
-                            <input type="file" id="spiffsFileInput" style="display:none;" style="width:100%;">
-                            <button type="button" id="spiffsBrowseButton">Browse</button>        
+                            <input type="file" id="littlefsFileInput" style="display:none;" style="width:100%;">
+                            <button type="button" id="littlefsBrowseButton">Browse</button>        
                         </td>
                     </tr><tr>
                         <td>Set path on server</td>
-                        <td><input type="text" id="spiffsFilepath" style="width:100%;"></td>
-                        <td><button type="button" id="spiffsUploadButton">Upload</button></td>
+                        <td><input type="text" id="littlefsFilepath" style="width:100%;"></td>
+                        <td><button type="button" id="littlefsUploadButton">Upload</button></td>
                     </tr><tr>
                     </tr>
                 </tbody></table>
-                <div id="spiffs-table"></div>`,
+                <div id="littlefs-table"></div>`,
             sidebar: `
                 <h2>Reset</h2>
                 <button id="resetESP32Button">ESP32</button>
@@ -348,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <td>OTA Update</td>
                             <td><select id="binaryType">
                                 <option value="esp32_app" selected>ESP32 App</option>
-                                <option value="esp32_spiffs">ESP32 Filesystem</option>
+                                <option value="esp32_littlefs">ESP32 Filesystem</option>
                                 <option value="ra4m1_app">RA4M1 App</option>
                             </select></td>
                     </tr><tr>
@@ -489,19 +489,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // ---------------------------------------------------------------                
             } else if(contentKey == 'tools') {
                 sendWebSocketMessage({ id: ws_api.reqListFiles });
-                const spiffsFileInput = document.getElementById('spiffsFileInput');
-                spiffsFileInput.addEventListener('change', (event) => {
+                const littlefsFileInput = document.getElementById('littlefsFileInput');
+                littlefsFileInput.addEventListener('change', (event) => {
                     files=event.target.files;
-                    document.getElementById("spiffsFilepath").value = files[0].name;
+                    document.getElementById("littlefsFilepath").value = files[0].name;
                 });
                                 
-                const spiffsBrowseButton = document.getElementById('spiffsBrowseButton');
-                spiffsBrowseButton.addEventListener('click', (event) => {
-                    spiffsFileInput.click();
+                const littlefsBrowseButton = document.getElementById('littlefsBrowseButton');
+                littlefsBrowseButton.addEventListener('click', (event) => {
+                    littlefsFileInput.click();
                 });
                 
-                const spiffsUploadButton = document.getElementById('spiffsUploadButton');
-                spiffsUploadButton.addEventListener('click', (event) => {
+                const littlefsUploadButton = document.getElementById('littlefsUploadButton');
+                littlefsUploadButton.addEventListener('click', (event) => {
                     uploadFile();
                 });
 
