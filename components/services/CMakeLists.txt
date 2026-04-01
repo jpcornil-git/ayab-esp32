@@ -5,6 +5,7 @@ set(COMPONENT_SRCS
     srv_littlefs.c
     srv_websocket.c
     srv_wifi.c
+    srv_usb.c
 )
 
 set(COMPONENT_PUBLIC_INCLUDE_DIRS
@@ -16,6 +17,7 @@ set(COMPONENT_REQUIRES
     esp_http_server
     espressif__mdns
     json
+    esp_tinyusb
 )
 
 set(COMPONENT_PRIV_REQUIRES

@@ -9,7 +9,8 @@
     - STA mode with DHCP client for normal operations
     - AP mode with DHCP server when there is no WiFi or to configure WiFi
 - mDNS server to access device by name rather than IP address (default=ayab.local) 
-- websocket to serial proxy enabling ayab api over a network (with webapp or ayab-desktop)
+- websocket communication enabling ayab api over a network (with webapp or ayab-desktop)
+- USB serial communication (legacy/wired mode)
 - http server to access the ayab webapp
 - LITTLEFS file system to store http server files (html, css, js, ...)
 - Over-The-Air (OTA) updates for esp32 firmware, ayab (RA4M1) firmware or LITTLEFS (partition or individual files)

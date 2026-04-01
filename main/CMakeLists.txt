@@ -11,6 +11,7 @@ set(COMPONENT_PRIV_REQUIRES
     esp_driver_gpio
     esp_driver_uart
     esp_wifi
+    esp_tinyusb
     app_config
     ota
     ra4m1

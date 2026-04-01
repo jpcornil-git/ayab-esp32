@@ -16,3 +16,4 @@ dependencies:
   #   public: true
   espressif/mdns: '*'
   joltwallet/littlefs: '*'
+  espressif/esp_tinyusb: '*'

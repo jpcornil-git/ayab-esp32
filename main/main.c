@@ -19,6 +19,7 @@
 #include "srv_http.h"
 #include "srv_mdns.h"
 #include "srv_websocket.h"
+#include "srv_usb.h"
 #include "srv_wifi.h"
 
 static const char *TAG = "main";
@@ -59,7 +60,7 @@ static mdns_txt_item_t serviceTxtData[] = {
  * @return BaseType_t pdTRUE if the message was sent successfully, pdFALSE otherwise.
  */
 BaseType_t ws_rx_bin_callback(const uint8_t *payload, size_t len) {
-    BaseType_t rv= pdFALSE;
+    BaseType_t rv = pdFALSE;
     uart_msg_t msg;
 
     msg.len = len;
@@ -102,6 +103,9 @@ void app_setup() {
     ra4m1_ctrl_init(RA4M1_PIN_RESET, RA4M1_PIN_BOOT);
     ra4m1_uart_init(RA4M1_UART, RA4M1_UART_BAUDRATE, RA4M1_UART_TX_PIN, RA4M1_UART_RX_PIN, app_event_group, RA4M1_UART_RX);
     ra4m1_samba_init(RA4M1_UART, RA4M1_SAMBA_BAUDRATE);
+
+    // Setup USB-CDC interface
+    ESP_ERROR_CHECK(srv_usb_init(ws_rx_bin_callback));
 
     // Initialize NVS
     esp_err_t err = nvs_flash_init();
@@ -147,10 +151,10 @@ void app_setup() {
  * and starts the WiFi and HTTP servers. It also handles events from the
  * RA4M1 UART interface and WebSocket communication.
  */
-void app_main() {   
-    ESP_LOGI(TAG, "ayab-webapp starting");
-
+void app_main() {
     app_setup();
+
+    ESP_LOGI(TAG, "ayab-webapp starting");
 
     // Start WiFi STA mode as default (fallback to AP mode after 3 failures)
     srv_wifi_start_STA(app_event_group,
@@ -184,11 +188,12 @@ void app_main() {
         
         // Websocket - Serial communication bridge
         if (event_bits & RA4M1_UART_RX) {
-            // UART (RA4M1) rx => WS tx
+            // UART (RA4M1) rx => WS tx & USB tx
             uart_msg_t message;
             ra4m1_uart_rx(&message);
             if (message.payload != NULL) {
                 srv_websocket_send_bin(message.payload, message.len);
+                srv_usb_send_bin(message.payload, message.len);
                 free(message.payload);
             }
         }
@@ -203,4 +208,3 @@ void app_main() {
         }
     }
 }
-
