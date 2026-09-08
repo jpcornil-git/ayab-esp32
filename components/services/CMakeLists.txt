@@ -16,7 +16,7 @@ set(COMPONENT_REQUIRES
     esp_wifi
     esp_http_server
     espressif__mdns
-    json
+    espressif__cjson
     esp_tinyusb
 )
 
