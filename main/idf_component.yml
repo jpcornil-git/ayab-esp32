@@ -17,3 +17,4 @@ dependencies:
   espressif/mdns: '*'
   joltwallet/littlefs: '*'
   espressif/esp_tinyusb: '*'
+  espressif/cjson: '*'
