@@ -72,6 +72,11 @@ static esp_err_t _set_content_type_from_file(httpd_req_t *req, const char *filen
         return httpd_resp_set_type(req, "image/jpeg");
     } else if (IS_FILE_EXT(filename, ".ico")) {
         return httpd_resp_set_type(req, "image/x-icon");
+    } else if (IS_FILE_EXT(filename, ".wav")) {
+        esp_err_t err = httpd_resp_set_hdr(req, "Cache-Control", "public, max-age=86400");
+        if (err == ESP_OK) {
+            return httpd_resp_set_type(req, "audio/wav");
+        }
     }
     /* This is a limited set only */
     /* For any other type always set as plain text */
@@ -82,7 +87,7 @@ static esp_err_t _set_content_type_from_file(httpd_req_t *req, const char *filen
 static const char* _get_path_from_uri(char *dest, const char *base_path, const char *uri, size_t destsize)
 {
     if (!strcmp(uri, "/")) {
-        uri = "/index.htm";
+        uri = "/index.html";
     }
 
     const size_t base_pathlen = strlen(base_path);
