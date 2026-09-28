@@ -1,6 +1,7 @@
 #include "srv_usb.h"
 #include "tinyusb.h"
 #include "tinyusb_cdc_acm.h"
+#include "tusb.h"
 #include "tinyusb_default_config.h"
 
 #include "tinyusb_console.h"
@@ -44,6 +45,9 @@ esp_err_t srv_usb_init(usb_rx_cb_t rx_callback) {
 
 
 esp_err_t srv_usb_send_bin(uint8_t *buffer, uint32_t buffer_length) {
+    if (!tud_cdc_n_connected(TINYUSB_CDC_ACM_0)) {
+        return ESP_ERR_INVALID_STATE;
+    }
     size_t queued = tinyusb_cdcacm_write_queue(TINYUSB_CDC_ACM_0, buffer, buffer_length);
     if (queued < buffer_length) {
         ESP_LOGW(TAG, "USB CDC ACM: Only %zu of %u bytes queued", queued, (unsigned int)buffer_length);
