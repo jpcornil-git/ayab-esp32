@@ -99,6 +99,8 @@ void srv_wifi_start_STA(EventGroupHandle_t event_group, const char* ssid, const 
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
 
     ESP_ERROR_CHECK(esp_wifi_start());
+    // TODO: Consider disabling power save mode for STA if needed to improve latency
+    // ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
 }
 
 void srv_wifi_start_AP(EventGroupHandle_t event_group) {

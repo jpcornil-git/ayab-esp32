@@ -1,3 +1,5 @@
+#include <sys/socket.h>
+
 #include "esp_log.h"
 #include "esp_idf_version.h"
 #include "esp_app_desc.h"
@@ -226,6 +228,11 @@ esp_err_t srv_websocket_send_bin(uint8_t *buffer, uint32_t buffer_length) {
 /* Handler processing incoming requests  */
 esp_err_t srv_websocket_get_handler(httpd_req_t *req) {
     if (req->method == HTTP_GET) {
+        /* Small packets -> set TCP_NODELAY option to disable Nagle's algorithm */
+        int fd = httpd_req_to_sockfd(req);
+        int nodelay = 1;
+        setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (void *)&nodelay, sizeof(int));
+        
         ESP_LOGI(TAG, "Handshake done, a new connection is opened");
         return ESP_OK;
     }
